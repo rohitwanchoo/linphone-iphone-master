@@ -210,7 +210,7 @@
 						snprintf(tmp, sizeof(tmp) - 1, "%s", linphone_address_get_domain(proxy_addr));
 					[self setCString:tmp forKey:@"account_proxy_preference"];
 				}
-				const char *tname = "udp";
+				const char *tname = "tcp";
 				switch (linphone_address_get_transport(proxy_addr)) {
 					case LinphoneTransportTcp:
 						tname = "tcp";
@@ -236,7 +236,7 @@
 				[self stringForKey:@"account_mandatory_domain_preference"].UTF8String);
 			if (ai) {
 				[self setCString:linphone_auth_info_get_userid(ai) forKey:@"account_userid_preference"];
-				[self setCString:linphone_auth_info_get_passwd(ai) forKey:@"account_mandatory_password_preference"];
+				[self setCString:linphone_auth_info_get_password(ai) forKey:@"account_mandatory_password_preference"];
 				// hidden but useful if provisioned
 				[self setCString:linphone_auth_info_get_ha1(ai) forKey:@"ha1_preference"];
 				[self setCString:linphone_auth_info_get_algorithm(ai) forKey:@"ha1_algo_preference"];
@@ -878,6 +878,8 @@
 		account_changed |= [self valueChangedForKey:@"port_preference"];
 		account_changed |= [self valueChangedForKey:@"random_port_preference"];
 		account_changed |= [self valueChangedForKey:@"use_ipv6"];
+        
+     
 
 		if (account_changed)
 			[self synchronizeAccounts];
@@ -1168,7 +1170,7 @@
 			ms_free(contact);
 			linphone_address_destroy(parsed);
 		}
-		[lm lpConfigSetInt:[self integerForKey:@"account_mandatory_advanced_preference"] forKey:@"account_mandatory_advanced_preference"];
+		[lm lpConfigSetInt:1 forKey:@"account_mandatory_advanced_preference"];
 
 		changedDict = [[NSMutableDictionary alloc] init];
 

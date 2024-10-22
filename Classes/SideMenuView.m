@@ -62,7 +62,7 @@
 
 - (void)updateHeader {
 	LinphoneAccount *default_account = linphone_core_get_default_account(LC);
-
+    _addressLabel.hidden = TRUE;
 	if (default_account != NULL) {
 		const LinphoneAddress *addr = linphone_account_params_get_identity_address(linphone_account_get_params(default_account));
 		[ContactDisplay setDisplayNameLabel:_nameLabel forAddress:addr];
@@ -95,16 +95,16 @@
 #pragma deploymate pop
 
 - (IBAction)onHeaderClick:(id)sender {
-	[PhoneMainView.instance changeCurrentView:SettingsView.compositeViewDescription];
+	//[PhoneMainView.instance changeCurrentView:SettingsView.compositeViewDescription];
 	[PhoneMainView.instance.mainViewController hideSideMenu:YES];
 }
 
 - (IBAction)onAvatarClick:(id)sender {
 	// hide ourself because we are on top of image picker
 	if (!IPAD) {
-		[PhoneMainView.instance.mainViewController hideSideMenu:YES];
+		//[PhoneMainView.instance.mainViewController hideSideMenu:YES];
 	}
-	[ImagePickerView SelectImageFromDevice:self atPosition:_avatarImage inView:self.view withDocumentMenuDelegate:nil];
+//	[ImagePickerView SelectImageFromDevice:self atPosition:_avatarImage inView:self.view withDocumentMenuDelegate:nil];
 }
 
 - (IBAction)onBackgroundClicked:(id)sender {

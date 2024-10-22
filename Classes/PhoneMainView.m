@@ -489,7 +489,6 @@ static RootViewManager *rootViewManagerInstance = nil;
 		
 	} @catch (NSException *exception) {
 		// we'll wait until the app transitions correctly
-        NSLog(@"NSException2910 = %@",exception.debugDescription);
 	}
 }
 

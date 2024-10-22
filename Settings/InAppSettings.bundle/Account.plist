@@ -12,7 +12,7 @@
 			<key>Key</key>
 			<string>account_mandatory_advanced_preference</string>
 			<key>DefaultValue</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Type</key>

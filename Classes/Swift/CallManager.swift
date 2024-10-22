@@ -145,12 +145,12 @@ import AVFoundation
 	}
 	
 	@objc func changeRouteToSpeaker() {
-		lc?.outputAudioDevice = lc?.audioDevices.first { $0.type == AudioDevice.Kind.Speaker }
+		lc?.outputAudioDevice = lc?.audioDevices.first { $0.type == AudioDeviceType.Speaker }
 		UIDevice.current.isProximityMonitoringEnabled = false
 	}
 	
 	@objc func changeRouteToBluetooth() {
-		lc?.outputAudioDevice = lc?.audioDevices.first { $0.type == AudioDevice.Kind.BluetoothA2DP || $0.type == AudioDevice.Kind.Bluetooth }
+		lc?.outputAudioDevice = lc?.audioDevices.first { $0.type == AudioDeviceType.BluetoothA2DP || $0.type == AudioDeviceType.Bluetooth }
 		UIDevice.current.isProximityMonitoringEnabled = (lc!.callsNb > 0)
 	}
 	
@@ -160,7 +160,7 @@ import AVFoundation
 	
 	@objc func isBluetoothAvailable() -> Bool {
 		for device in lc!.audioDevices {
-			if (device.type == AudioDevice.Kind.Bluetooth || device.type == AudioDevice.Kind.BluetoothA2DP) {
+			if (device.type == AudioDeviceType.Bluetooth || device.type == AudioDeviceType.BluetoothA2DP) {
 				return true;
 			}
 		}
@@ -169,21 +169,21 @@ import AVFoundation
 	
 	@objc func isSpeakerEnabled() -> Bool {
 		if let outputDevice = lc!.outputAudioDevice {
-			return outputDevice.type == AudioDevice.Kind.Speaker
+			return outputDevice.type == AudioDeviceType.Speaker
 		}
 		return false
 	}
 	
 	@objc func isBluetoothEnabled() -> Bool {
 		if let outputDevice = lc!.outputAudioDevice {
-			return (outputDevice.type == AudioDevice.Kind.Bluetooth || outputDevice.type == AudioDevice.Kind.BluetoothA2DP)
+			return (outputDevice.type == AudioDeviceType.Bluetooth || outputDevice.type == AudioDeviceType.BluetoothA2DP)
 		}
 		return false
 	}
 	
 	@objc func isReceiverEnabled() -> Bool {
 		if let outputDevice = lc!.outputAudioDevice {
-			return outputDevice.type == AudioDevice.Kind.Microphone
+			return outputDevice.type == AudioDeviceType.Microphone
 		}
 		return false
 	}
@@ -213,12 +213,14 @@ import AVFoundation
 	}
 	
 	func displayIncomingCall(call:Call?, handle: String, hasVideo: Bool, callId: String, displayName:String) {
-		let uuid = UUID()
-		let callInfo = CallInfo.newIncomingCallInfo(callId: callId)
-		
-		providerDelegate.callInfos.updateValue(callInfo, forKey: uuid)
-		providerDelegate.uuids.updateValue(uuid, forKey: callId)
-		providerDelegate.reportIncomingCall(call:call, uuid: uuid, handle: handle, hasVideo: hasVideo, displayName: displayName)
+
+        let uuid = UUID()
+                let callInfo = CallInfo.newIncomingCallInfo(callId: callId)
+
+                providerDelegate.callInfos.updateValue(callInfo, forKey: uuid)
+                providerDelegate.uuids.updateValue(uuid, forKey: callId)
+                providerDelegate.reportIncomingCall(call:call, uuid: uuid, handle: handle, hasVideo: hasVideo, displayName: displayName)
+
 		
 	}
 	
@@ -540,8 +542,9 @@ import AVFoundation
 	func onCallStateChanged(core: Core, call: Call, state cstate: Call.State, message: String) {
 		let callLog = call.callLog
 		let callId = callLog?.callId
+       
 		if (cstate == .PushIncomingReceived) {
-			displayIncomingCall(call: call, handle: "Calling", hasVideo: false, callId: callId!, displayName: "Calling")
+			displayIncomingCall(call: call, handle: "Calling", hasVideo: false, callId: callId!, displayName: "Calling1")
 		} else {
 			let video = (core.videoActivationPolicy?.automaticallyAccept ?? false) && (call.remoteParams?.videoEnabled ?? false)
 			
@@ -566,6 +569,10 @@ import AVFoundation
 					
 					let uuid = CallManager.instance().providerDelegate.uuids["\(CallManager.uuidReplacedCall)"]
 					let callInfo = CallManager.instance().providerDelegate.callInfos[uuid!]
+                    
+                    print("FirstS \(uuid?.uuidString)")
+                    print("FirstS \(callId)")
+                    
 					callInfo!.callId = CallManager.instance().referedToCall ?? ""
 					CallManager.instance().providerDelegate.callInfos.updateValue(callInfo!, forKey: uuid!)
 					CallManager.instance().providerDelegate.uuids.removeValue(forKey: callId!)
@@ -578,6 +585,8 @@ import AVFoundation
 						CallsViewModel.shared.currentCallData.readCurrentAndObserve { _ in
 							let uuid = CallManager.instance().providerDelegate.uuids["\(callId!)"]
 							if (uuid != nil) {
+                                print("FirstS \(uuid?.uuidString)")
+                                print("FirstS \(callId)")
 								displayName = "\(VoipTexts.conference_incoming_title):  \(CallsViewModel.shared.currentCallData.value??.remoteConferenceSubject.value ?? "") (\(CallsViewModel.shared.currentCallData.value??.conferenceParticipantsCountLabel.value ?? ""))"
 								CallManager.instance().providerDelegate.updateCall(uuid: uuid!, handle: addr!.asStringUriOnly(), hasVideo: video, displayName: displayName)
 							}
@@ -638,6 +647,8 @@ import AVFoundation
 					.OutgoingEarlyMedia:
 				if (CallManager.callKitEnabled()) {
 					let uuid = CallManager.instance().providerDelegate.uuids[""]
+                    print("FirstS \(uuid?.uuidString)")
+                    print("FirstS \(callId)")
 					if (uuid != nil) {
 						let callInfo = CallManager.instance().providerDelegate.callInfos[uuid!]
 						callInfo!.callId = callId!
@@ -698,6 +709,8 @@ import AVFoundation
 				if (CallManager.callKitEnabled()) {
 					var uuid = CallManager.instance().providerDelegate.uuids["\(callId!)"]
 					if (callId == CallManager.instance().referedToCall) {
+                        print("FirstS \(uuid?.uuidString)")
+                        print("FirstS \(callId)")
 						// refered call ended before connecting
 						Log.directLog(BCTBX_LOG_MESSAGE, text: "Callkit: end refered to call :  \(String(describing: CallManager.instance().referedToCall))")
 						CallManager.instance().referedFromCall = nil
@@ -709,6 +722,8 @@ import AVFoundation
 					}
 					if (uuid != nil) {
 						if (callId == CallManager.instance().referedFromCall) {
+                            print("FirstS \(uuid?.uuidString)")
+                            print("FirstS \(callId)")
 							Log.directLog(BCTBX_LOG_MESSAGE, text: "Callkit: end refered from call : \(String(describing: CallManager.instance().referedFromCall))")
 							CallManager.instance().referedFromCall = nil
 							let callInfo = CallManager.instance().providerDelegate.callInfos[uuid!]
@@ -826,6 +841,51 @@ import AVFoundation
 		}
 		return true; // Legacy behavior
 	}
+    
+    @objc func displayIncomingCall(callId: String) {
+        let uuid = CallManager.instance().providerDelegate.uuids["\(callId)"]
+        print("First displayIncomingCall")
+        print("First \(String(describing: uuid))")
+        if (uuid != nil) {
+            let callInfo = providerDelegate.callInfos[uuid!]
+            if (callInfo?.connected ?? false) {
+                // This call was declined.
+                providerDelegate.reportIncomingCall(call:nil, uuid: uuid!, handle: "Calling1", hasVideo: false, displayName: "callInfo?.displayName1" ?? "Calling1")
+                providerDelegate.endCall(uuid: uuid!)
+            }
+            return
+        }
+        
+        let call = CallManager.instance().callByCallId(callId: callId)
+        if (call != nil) {
+            let displayName = FastAddressBook.displayName(for: call?.remoteAddress?.getCobject) ?? "Unknow"
+            let video = UIApplication.shared.applicationState == .active && (lc!.videoActivationPolicy?.automaticallyAccept ?? false) && (call!.remoteParams?.videoEnabled ?? false)
+            displayIncomingCall(call: call, handle: (call!.remoteAddress?.asStringUriOnly())!, hasVideo: video, callId: callId, displayName: "displayName")
+        } else {
+            displayIncomingCall(call: nil, handle: "Calling1", hasVideo: false, callId: callId, displayName: "Incoming call")
+        }
+    }
+    //    func calldetailupdate(uuid:UUID,call:Call?, handle: String, hasVideo: Bool, callId: String, displayName:String)
+    //    {
+    //        let notification_call_id = UserDefaults.standard.value(forKey: "notification-callID") as? String
+    //        print("Display name Call Manager>>>")
+    //        let callInfo = CallInfo.newIncomingCallInfo(callId: callId)
+    //        providerDelegate.callInfos.updateValue(callInfo, forKey: uuid)
+    //     //   providerDelegate.uuids.removeValue(forKey: notification_call_id!)
+    //        providerDelegate.uuids.updateValue(uuid, forKey: callId)
+    //        providerDelegate.reportIncomingCall(call:call, uuid: uuid, handle: handle, hasVideo: hasVideo, displayName: displayName)
+    //    }
+   /* func displayIncomingCall(call:Call?, handle: String, hasVideo: Bool, callId: String, displayName:String)
+    {
+        //        let notification_call_id = UserDefaults.standard.value(forKey: "notification-callID") as? String
+        let uuid = UUID()
+        let callInfo = CallInfo.newIncomingCallInfo(callId: callId)
+        //  providerDelegate.callInfos.removeValue(forKey: uuid)
+        providerDelegate.callInfos.updateValue(callInfo, forKey: uuid)
+        //providerDelegate.uuids.removeValue(forKey: notification_call_id!)
+        providerDelegate.uuids.updateValue(uuid, forKey: callId)
+        providerDelegate.reportIncomingCall(call:call, uuid: uuid, handle: handle, hasVideo: hasVideo, displayName: displayName)
+    }*/
 }
 
 

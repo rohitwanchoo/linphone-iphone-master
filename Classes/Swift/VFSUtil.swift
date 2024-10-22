@@ -27,8 +27,8 @@ import os
 
 @objc class VFSUtil: NSObject {
 	
-    @objc static let keyChainSharingGroup = "portal.voiptella.com" // Enable Keychain Sharing capabilities in app and all app extensions that need to activate VFS and set key chain group to be the bundle ID for all and here
-    @objc static let TEAM_ID = "Y3PQTYL59Y" // Apple TEAM ID
+	@objc static let keyChainSharingGroup = "portal.voiptella.com" // Enable Keychain Sharing capabilities in app and all app extensions that need to activate VFS and set key chain group to be the bundle ID for all and here
+	@objc static let TEAM_ID = "Y3PQTYL59Y" // Apple TEAM ID
 	
 	@objc static let keyName = "\(keyChainSharingGroup).vfskey"
 	@objc static let prefName = "\(keyChainSharingGroup).vfspref"
@@ -237,7 +237,5 @@ import os
 			deleteSecurePreference(key: prefName)
 		}
 	}
-	
-	
-	
+
 }

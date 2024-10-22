@@ -30,7 +30,7 @@
 @property(nonatomic, strong) IBOutlet UIButton *callSecurityButton;
 @property(weak, nonatomic) IBOutlet UIButton *voicemailButton;
 @property(weak, nonatomic) IBOutlet UIButton *callQualityButton;
-
+@property(weak, nonatomic) IBOutlet UIButton *sideMenuButton;
 @property(weak, nonatomic) IBOutlet UIView *incallView;
 @property(weak, nonatomic) IBOutlet UIView *outcallView;
 

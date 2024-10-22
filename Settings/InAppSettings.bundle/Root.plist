@@ -82,7 +82,7 @@
 			<key>Key</key>
 			<string>enable_video_preference</string>
 			<key>DefaultValue</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Key</key>

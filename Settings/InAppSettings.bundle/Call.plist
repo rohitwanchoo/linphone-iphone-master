@@ -22,7 +22,7 @@
 			<key>Key</key>
 			<string>rfc_dtmf_preference</string>
 			<key>DefaultValue</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Type</key>

@@ -26,7 +26,7 @@ class ChatConversationViewModel {
 	
 	static let sharedModel = ChatConversationViewModel()
 	
-    let APP_GROUP_ID = "group.portal.voiptella.com"
+	let APP_GROUP_ID = "group.portal.voiptella.com"
 
 	var chatRoom: ChatRoom? = nil
 	var chatRoomDelegate: ChatRoomDelegate? = nil
@@ -504,7 +504,7 @@ class ChatConversationViewModel {
 		let core = Core.getSwiftObject(cObject: LinphoneManager.getLc())
 		do{
 			let p = try core.createRecorderParams()
-			p.fileFormat = Recorder.FileFormat.Mkv
+			p.fileFormat = RecorderFileFormat.Mkv
 			ChatConversationViewModel.sharedModel.voiceRecorder = try core.createRecorder(params: p)
 		}catch{
 			Log.e(error.localizedDescription)

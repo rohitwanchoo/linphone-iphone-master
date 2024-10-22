@@ -454,7 +454,7 @@ void update_hash_cbs(LinphoneAccountCreator *creator, LinphoneAccountCreatorStat
 		const LinphoneAuthInfo *auth = linphone_account_find_auth_info(account);
 		if (auth) {
 			LinphoneAuthInfo * newAuth = linphone_auth_info_clone(auth);
-			linphone_auth_info_set_passwd(newAuth, _tmpPwd.UTF8String);
+			linphone_auth_info_set_password(newAuth, _tmpPwd.UTF8String);
 			linphone_core_remove_auth_info(LC, auth);
 			linphone_core_add_auth_info(LC, newAuth);
 		}

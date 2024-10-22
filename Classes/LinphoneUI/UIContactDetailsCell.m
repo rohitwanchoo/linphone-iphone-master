@@ -34,8 +34,11 @@
 		// resize cell to match .nib size. It is needed when resized the cell to
 		// correctly adapt its height too
 		UIView *sub = ((UIView *)[arrayOfViews objectAtIndex:0]);
-		[self setFrame:CGRectMake(0, 0, sub.frame.size.width, sub.frame.size.height)];
+		[self setFrame:CGRectMake(0, 10, sub.frame.size.width, sub.frame.size.height)];
 		[self addSubview:sub];
+        
+        [self.optionsView setFrame:CGRectMake(sub.frame.size.width - self.optionsView.frame.size.width, 10, self.optionsView.frame.size.width, self.optionsView.frame.size.height)];
+      
 	}
 	return self;
 }
@@ -86,7 +89,7 @@
 }
 
 - (void)shouldHideEncryptedChatView:(BOOL)hasLime {
-    _encryptedChatView.hidden = !hasLime || [LinphoneManager.instance lpConfigBoolForKey:@"disable_chat_feature"];
+  /*  _encryptedChatView.hidden = !hasLime || [LinphoneManager.instance lpConfigBoolForKey:@"disable_chat_feature"];
     CGRect newFrame = _optionsView.frame;
     if (!hasLime) {
         newFrame.origin.x = _addressLabel.frame.origin.x + _callButton.frame.size.width * 2/3;
@@ -94,7 +97,7 @@
     } else {
         newFrame.origin.x = _addressLabel.frame.origin.x;
     }
-    _optionsView.frame = newFrame;
+    _optionsView.frame = newFrame;*/
 }
 
 - (void)shouldHideLinphoneImageOfAddress {

@@ -389,7 +389,7 @@ static int check_should_migrate_images(void *data, int argc, char **argv, char *
 - (void)migrationLinphoneSettings {
 	NSString *appDomain  = [LinphoneManager.instance lpConfigStringForKey:@"domain_name"
 				inSection:@"app"
-				withDefault:@"sip1.voiptella.com"];
+				withDefault:@"sip.linphone.org"];
 	
 	/* AVPF migration */
 	if ([self lpConfigBoolForKey:@"avpf_migration_done"] == FALSE) {
@@ -796,13 +796,62 @@ static void linphone_iphone_registration_state(LinphoneCore *lc, LinphoneAccount
 }
 
 #pragma mark - Auth info Function
+static void linphone_iphone_popup_password_request1(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
+    // let the wizard handle its own errors
+    if ([PhoneMainView.instance currentView] != AssistantView.compositeViewDescription) {
+        const char * realmC = linphone_auth_info_get_realm(auth_info);
+        const char * usernameC = linphone_auth_info_get_username(auth_info) ? : "";
+        const char * domainC = linphone_auth_info_get_domain(auth_info) ? : "";
+        
+        static UIAlertController *alertView = nil;
+        
+        // InstantMessageDeliveryNotifications from previous accounts can trigger some pop-up spam asking for indentification
+        // Try to filter the popup password request to avoid displaying those that do not matter and can be handled through a simple warning
+        const MSList *accountList = linphone_core_get_account_list(LC);
+        bool foundMatchingConfig = false;
+        while (accountList && !foundMatchingConfig) {
+            LinphoneAccountParams const *accountParams = linphone_account_get_params(accountList->data);
+            const char * configUsername = linphone_address_get_username(linphone_account_params_get_identity_address(accountParams));
+            const char * configDomain = linphone_account_params_get_domain(accountParams);
+            foundMatchingConfig = (strcmp(configUsername, usernameC) == 0) && (strcmp(configDomain, domainC) == 0);
+            accountList = accountList->next;
+        }
+        if (!foundMatchingConfig) {
+            LOGW(@"Received an authentication request from %s@%s, but ignored it did not match any current user", usernameC, domainC);
+            return;
+        }
+        
+        // avoid having multiple popups
+        [PhoneMainView.instance dismissViewControllerAnimated:YES completion:nil];
 
+        // dont pop up if we are in background, in any case we will refresh registers when entering
+        // the application again
+        if ([[UIApplication sharedApplication] applicationState] != UIApplicationStateActive) {
+            return;
+        }
+
+        NSString *realm = [NSString stringWithUTF8String:realmC?:domainC];
+        NSString *username = [NSString stringWithUTF8String:usernameC];
+        NSString *domain = [NSString stringWithUTF8String:domainC];
+        
+        NSString *password = [[NSUserDefaults standardUserDefaults] stringForKey:@"password"];
+        
+        LinphoneAuthInfo *info =
+        linphone_auth_info_new(username.UTF8String, NULL, password.UTF8String, NULL,
+                       realm.UTF8String, domain.UTF8String);
+        linphone_core_add_auth_info(LC, info);
+        [LinphoneManager.instance refreshRegisters];
+        
+       
+    }
+}
 static void linphone_iphone_popup_password_request(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
 	// let the wizard handle its own errors
 	if ([PhoneMainView.instance currentView] != AssistantView.compositeViewDescription) {
 		const char * realmC = linphone_auth_info_get_realm(auth_info);
 		const char * usernameC = linphone_auth_info_get_username(auth_info) ? : "";
 		const char * domainC = linphone_auth_info_get_domain(auth_info) ? : "";
+        
 		static UIAlertController *alertView = nil;
 		
 		// InstantMessageDeliveryNotifications from previous accounts can trigger some pop-up spam asking for indentification
@@ -1401,6 +1450,8 @@ void popup_link_account_cb(LinphoneAccountCreator *creator, LinphoneAccountCreat
 		// In linphone-iphone, remote and voip push autorisations always go together.
 		bool accountPushAllowed = linphone_account_params_get_push_notification_allowed(accountParams);
 		linphone_account_params_set_remote_push_notification_allowed(accountParams, accountPushAllowed);
+      
+       
 		
 		
 		LinphonePushNotificationConfig *pushConfig = linphone_account_params_get_push_notification_config(accountParams);
@@ -1451,13 +1502,113 @@ void popup_link_account_cb(LinphoneAccountCreator *creator, LinphoneAccountCreat
 	}
 }
 
+
+-(void)setupVoipTellaAccount{
+    const MSList *accountsList = linphone_core_get_account_list(theLinphoneCore);
+    while (accountsList) {
+        LinphoneAccount * account = accountsList->data;
+       const LinphoneAccountParams *  currentParams = linphone_account_get_params(account);
+        const  LinphoneAddress * addr = linphone_account_params_get_identity_address(currentParams);
+        char * addressIdentity = linphone_address_as_string(addr);
+        
+        if (strcmp(linphone_address_get_domain(addr), "sip1.voiptella.com") == 0) {
+            LinphoneAccountParams * accountParams = linphone_account_params_clone(linphone_account_get_params(account));
+          
+          /*  linphone_account_set_params(account, newParams);
+            linphone_account_params_unref(newParams);*/
+            
+            
+            NSString *domain = [[NSUserDefaults standardUserDefaults] stringForKey:@"domain"];
+            NSString *username = [[NSUserDefaults standardUserDefaults] stringForKey:@"username"];
+            NSString *pwd = [[NSUserDefaults standardUserDefaults] stringForKey:@"password"];
+            NSString * displayName = [[NSUserDefaults standardUserDefaults] stringForKey:@"dname"];
+            
+        //    LinphoneAccountParams *accountParams =  linphone_core_create_account_params(LC);
+        //    LinphoneAddress *addr = linphone_address_new(NULL);
+            LinphoneAddress *tmpAddr = linphone_address_new([NSString stringWithFormat:@"sip:%@",domain].UTF8String);
+           
+            
+            linphone_address_set_username(addr, username.UTF8String);
+            linphone_address_set_port(addr, linphone_address_get_port(tmpAddr));
+            linphone_address_set_domain(addr, linphone_address_get_domain(tmpAddr));
+            if (displayName && ![displayName isEqualToString:@""]) {
+                linphone_address_set_display_name(addr, displayName.UTF8String);
+            }
+            
+            linphone_account_params_set_identity_address(accountParams, addr);
+            
+            NSString *type = @"TLS";
+            LinphoneAddress *transportAddr = linphone_address_new([NSString stringWithFormat:@"sip:%s;transport=%s", domain.UTF8String, type.lowercaseString.UTF8String].UTF8String);
+            linphone_account_params_set_routes_addresses(accountParams, bctbx_list_new(transportAddr));
+            linphone_account_params_set_server_addr(accountParams, [NSString stringWithFormat:@"%s;transport=%s", domain.UTF8String, type.lowercaseString.UTF8String].UTF8String);
+            
+            linphone_address_unref(transportAddr);
+           
+            linphone_account_params_set_publish_enabled(accountParams, FALSE);
+            linphone_account_params_set_register_enabled(accountParams, TRUE);
+            linphone_account_params_set_push_notification_allowed(accountParams, FALSE);
+            
+            LinphoneAuthInfo *info =
+            linphone_auth_info_new(linphone_address_get_username(addr), // username
+                                   NULL,                                // user id
+                                   pwd.UTF8String,                        // passwd
+                                   NULL,                                // ha1
+                                   linphone_address_get_domain(addr),   // realm - assumed to be domain
+                                   linphone_address_get_domain(addr)    // domain
+                                   );
+            linphone_auth_info_set_userid(info, linphone_address_get_username(addr));
+            linphone_core_add_auth_info(LC, info);
+            linphone_address_unref(addr);
+            linphone_address_unref(tmpAddr);
+            
+            
+            LinphoneNatPolicy *LNP = linphone_core_get_nat_policy(LC);
+            linphone_nat_policy_enable_ice(LNP, TRUE);
+            linphone_nat_policy_enable_turn(LNP, TRUE);
+            linphone_nat_policy_set_stun_server(LNP, [domain UTF8String]);
+           // linphone_nat_policy_set_stun_server(LNP, [username UTF8String]);
+            linphone_nat_policy_enable_stun(LNP, TRUE); /*we always use STUN with ICE*/
+            linphone_nat_policy_set_stun_server_username(LNP, [username UTF8String]);
+            linphone_core_set_nat_policy(LC, LNP);
+            linphone_account_params_set_nat_policy(accountParams, LNP);
+            linphone_core_set_media_encryption(LC, LinphoneMediaEncryptionDTLS);
+       
+            
+            
+            
+            
+         //   LinphoneAccount *account = linphone_core_create_account(LC, accountParams);
+          /*  linphone_account_set_params(account, accountParams);
+            linphone_account_params_unref(accountParams);
+            if (account) {
+                if (linphone_core_add_account(LC, account) != -1) {
+                    linphone_core_set_default_account(LC, account);
+                    // reload address book to prepend proxy config domain to contacts' phone number
+                    // todo: STOP doing that!
+                  //  [[LinphoneManager.instance fastAddressBook] fetchContactsInBackGroundThread];
+                   // [PhoneMainView.instance changeCurrentView:DialerView.compositeViewDescription];
+                } else {
+                   // [self displayAssistantConfigurationError];
+                }
+            } else {
+                //[self displayAssistantConfigurationError];
+            }*/
+            
+        }
+        
+        ms_free(addressIdentity);
+        accountsList = accountsList->next;
+    }
+}
+
 - (void)startLinphoneCore {
 	bool corePushEnabled = [self lpConfigIntForKey:@"net" inSection:@"push_notification"];
 	linphone_core_set_push_notification_enabled([LinphoneManager getLc], corePushEnabled);
 	linphone_core_start([LinphoneManager getLc]);
-	
+    linphone_core_set_media_encryption(LC, LinphoneMediaEncryptionDTLS);
 	[self configurePushProviderForAccounts];
 	[self enableLinphoneAccountSpecificSettings];
+   // [self setupVoipTellaAccount];
 }
 
 - (void)createLinphoneCore {

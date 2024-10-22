@@ -183,17 +183,19 @@
 }
 - (void)accountUpdate:(LinphoneAccount *)account {
 	LinphoneRegistrationState state = LinphoneRegistrationNone;
-    NSLog(@"RSTATE = %d",state);
 	NSString *message = nil;
 	LinphoneGlobalState gstate = linphone_core_get_global_state(LC);
-	
+    _sideMenuButton.hidden = TRUE;
+    _registrationState.hidden = TRUE;
 	if ([PhoneMainView.instance.currentView equal:AssistantView.compositeViewDescription] || [PhoneMainView.instance.currentView equal:CountryListView.compositeViewDescription]) {
 		message = NSLocalizedString(@"Configuring account", nil);
+        _sideMenuButton.hidden = TRUE;
 	} else if (gstate == LinphoneGlobalOn && !linphone_core_is_network_reachable(LC)) {
 		message = NSLocalizedString(@"Network down", nil);
 	} else if (gstate == LinphoneGlobalConfiguring) {
 		message = NSLocalizedString(@"Fetching remote configuration", nil);
 	} else if (account == NULL) {
+        _sideMenuButton.hidden = TRUE;
 		state = LinphoneRegistrationNone;
 		MSList *accounts = [LinphoneManager.instance createAccountsNotHiddenList];
 		if (accounts != NULL) {
@@ -201,14 +203,18 @@
 		} else {
 			message = NSLocalizedString(@"No account configured", nil);
 		}
+        _registrationState.hidden = TRUE;
 		bctbx_free(accounts);
 
 	} else {
+        _registrationState.hidden = FALSE;
+        _sideMenuButton.hidden = FALSE;
 		state = linphone_account_get_state(account);
-        NSLog(@"RSTATE = %d",state);
+
 		switch (state) {
 			case LinphoneRegistrationOk:
 				message = NSLocalizedString(@"Connected", nil);
+                _sideMenuButton.hidden = FALSE;
 				break;
 			case LinphoneRegistrationNone:
 			case LinphoneRegistrationCleared:
@@ -223,10 +229,11 @@
 			default:
 				break;
 		}
+        [_registrationState setTitle:message forState:UIControlStateNormal];
+        _registrationState.accessibilityValue = message;
+        [_registrationState setImage:[self.class imageForState:state] forState:UIControlStateNormal];
 	}
-	[_registrationState setTitle:message forState:UIControlStateNormal];
-	_registrationState.accessibilityValue = message;
-	[_registrationState setImage:[self.class imageForState:state] forState:UIControlStateNormal];
+	
 }
 
 #pragma mark -

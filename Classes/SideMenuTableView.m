@@ -58,13 +58,13 @@
 
 	_sideMenuEntries = [[NSMutableArray alloc] init];
 
-	[_sideMenuEntries
-		addObject:[[SideMenuEntry alloc] initWithTitle:NSLocalizedString(@"Assistant", nil)
+	/*[_sideMenuEntries
+		addObject:[[SideMenuEntry alloc] rohit123:NSLocalizedString(@"Assistant", nil)
                                                  image:[UIImage imageNamed:@"menu_assistant.png"]
 											  tapBlock:^() {
 												[PhoneMainView.instance
 													changeCurrentView:AssistantView.compositeViewDescription];
-											  }]];
+											  }]];*/
 	BOOL mustLink = ([LinphoneManager.instance lpConfigIntForKey:@"must_link_account_time"] > 0);
 	
 	MSList *accounts = [LinphoneManager.instance createAccountsNotHiddenList];
@@ -75,20 +75,20 @@
 			addObject:[[SideMenuEntry alloc] initWithTitle:NSLocalizedString(@"Link my account", nil)
                                                      image:[UIImage imageNamed:@"menu_link_account.png"]
 												  tapBlock:^() {
-													[PhoneMainView.instance
-														changeCurrentView:AssistantLinkView.compositeViewDescription];
+													/*[PhoneMainView.instance
+														changeCurrentView:AssistantLinkView.compositeViewDescription];*/
 												  }]];
 	}
 
     
-	[_sideMenuEntries
+	/*[_sideMenuEntries
 		addObject:[[SideMenuEntry alloc] initWithTitle:NSLocalizedString(@"Settings", nil)
                                                  image:[UIImage imageNamed:@"menu_options.png"]
 											  tapBlock:^() {
 												[PhoneMainView.instance
 													changeCurrentView:SettingsView.compositeViewDescription];
-											  }]];
-    [_sideMenuEntries
+											  }]];*/
+ /*   [_sideMenuEntries
      addObject:[[SideMenuEntry alloc] initWithTitle:NSLocalizedString(@"Recordings", nil)
                                               image:[UIImage imageNamed:@"menu_recordings.png"]
                                            tapBlock:^() {
@@ -104,7 +104,7 @@
 													[PhoneMainView.instance
 														changeCurrentView:ShopView.compositeViewDescription];
 												  }]];
-	}
+	}*/
 	
 	LinphoneAccount *defaultAccount = linphone_core_get_default_account(LC);
 	if (defaultAccount && linphone_account_params_get_audio_video_conference_factory_address(linphone_account_get_params(defaultAccount))){
@@ -118,13 +118,58 @@
 																}]];
 	}
 	
-	[_sideMenuEntries addObject:[[SideMenuEntry alloc] initWithTitle:NSLocalizedString(@"About", nil)
+	[_sideMenuEntries addObject:[[SideMenuEntry alloc] initWithTitle:NSLocalizedString(@"Logout", nil)
                                                                image:[UIImage imageNamed:@"menu_about.png"]
 															tapBlock:^() {
-															  [PhoneMainView.instance
-																  changeCurrentView:AboutView.compositeViewDescription];
+        
+        
+        
+															/*  [PhoneMainView.instance
+																  changeCurrentView:AboutView.compositeViewDescription];*/
+      //  [PhoneMainView.instance
+        //    changeCurrentView:AssistantView.compositeViewDescription];
+        [self removeAccount];
 
 															}]];
+}
+
+- (void)removeAccount {
+    
+    MSList *accountList = [LinphoneManager.instance createAccountsNotHiddenList];
+    LinphoneAccount *account = linphone_core_get_default_account(LC);
+ 
+    
+    
+    const MSList *lists = linphone_core_get_friends_lists(LC);
+    while (lists) {
+        linphone_friend_list_enable_subscriptions(lists->data, FALSE);
+        linphone_friend_list_update_subscriptions(lists->data);
+        lists = lists->next;
+    }
+    BOOL isDefault = (linphone_core_get_default_account(LC) == account);
+
+    const LinphoneAuthInfo *ai = linphone_account_find_auth_info(account);
+    linphone_core_remove_account(LC, account);
+    if (ai) {
+        // Friend list unsubscription above is not instantanous, so give a bit of a time margin before finishing the removal of the auth info
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            linphone_core_remove_auth_info(LC, ai);
+            [LinphoneManager.instance removeAllAccounts];
+            [PhoneMainView.instance
+                changeCurrentView:AssistantView.compositeViewDescription];
+        });
+    }
+   
+
+    if (isDefault) {
+        // if we removed the default proxy config, set another one instead
+        if (accountList != NULL) {
+            linphone_core_set_default_account(LC, (LinphoneAccount *)(accountList->data));
+        }
+    }
+    bctbx_free(accountList);
+   
+    
 }
 
 #pragma mark - Table View Controller
@@ -135,12 +180,13 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 	if (section == 0) {
 		
-		BOOL hasDefault = (linphone_core_get_default_account(LC) != NULL);
+		/*BOOL hasDefault = (linphone_core_get_default_account(LC) != NULL);
 		// default account is shown in the header already
 		MSList *accounts = [LinphoneManager.instance createAccountsNotHiddenList];
 		size_t count = bctbx_list_size(accounts);
 		bctbx_free(accounts);
-		return MAX(0, (int)count - (hasDefault ? 1 : 0));
+		return MAX(0, (int)count - (hasDefault ? 1 : 0));*/
+        return 0;
 	} else {
 		return [_sideMenuEntries count];
 	}

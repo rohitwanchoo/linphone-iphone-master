@@ -118,6 +118,12 @@ static UICompositeViewDescription *compositeDescription = nil;
 	[_nineButton setDigit:'9'];
 	[_starButton setDigit:'*'];
 	[_hashButton setDigit:'#'];
+    
+  //  [[_zeroButton layer]setCornerRadius:_zeroButton.frame.size.width/2];
+   /* [[_zeroButton layer]setCornerRadius:1.0];
+    [[_zeroButton layer]setBorderWidth:1.0];
+    [[_zeroButton layer]setBorderColor:UIColor.blackColor.CGColor];
+    [_zeroButton setBackgroundColor:[UIColor lightGrayColor]];*/
 
 	[_addressField setAdjustsFontSizeToFitWidth:TRUE]; // Not put it in IB: issue with placeholder size
 

@@ -167,6 +167,7 @@ static UICompositeViewDescription *compositeDescription = nil;
 	const LinphoneAddress *addr = linphone_call_log_get_remote_address(callLog);
 	_addContactButton.hidden = ([FastAddressBook getContactWithAddress:addr] != nil);
 	[ContactDisplay setDisplayNameLabel:_contactLabel forAddress:addr withAddressLabel:_addressLabel];
+    [_addressLabel setHidden:TRUE];
 	[_avatarImage setImage:[FastAddressBook imageForAddress:addr]];
     Contact *contact = [FastAddressBook getContactWithAddress:addr];
     const LinphonePresenceModel *model = contact.friend ? linphone_friend_get_presence_model(contact.friend) : NULL;

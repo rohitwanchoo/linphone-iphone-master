@@ -2,7 +2,7 @@
 animations_preference=1
 autoanswer_notif_preference=1
 backgroundmode_preference=1
-edge_opt_preference=0
+edge_opt_preference=1
 enable_log_collect=0
 file_transfer_migration_done=1
 ice_preference=1

@@ -181,7 +181,20 @@ extension ProviderDelegate: CXProviderDelegate {
 		}
 		action.fulfill()
 	}
-
+    func configureAudioSession() {
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            if audioSession.category != .playAndRecord {
+                try audioSession.setCategory(AVAudioSession.Category.playAndRecord,
+                                             options: AVAudioSession.CategoryOptions.allowBluetooth)
+            }
+            if audioSession.mode != .voiceChat {
+                try audioSession.setMode(.voiceChat)
+            }
+        } catch {
+           // logger.error(msg: "Error configuring AVAudioSession: \(error.localizedDescription)")
+        }
+    }
 	func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
 		let uuid = action.callUUID
 		let callInfo = callInfos[uuid]
@@ -189,16 +202,25 @@ extension ProviderDelegate: CXProviderDelegate {
 		Log.directLog(BCTBX_LOG_MESSAGE, text: "CallKit: answer call with call-id: \(String(describing: callId)) and UUID: \(uuid.description).")
 
 		let call = CallManager.instance().callByCallId(callId: callId)
+        
+        if (call == nil || call?.state != Call.State.IncomingReceived) {
+                   // configure audio session here. Use 48000 Hz as sampling rate.
+                CallManager.instance().callkitAudioSessionActivated = false
+                CallManager.instance().lc?.configureAudioSession()
+            self.configureAudioSession()
+           } else {
+               if (UIApplication.shared.applicationState != .active) {
+                   CallManager.instance().backgroundContextCall = call
+                   CallManager.instance().backgroundContextCameraIsEnabled = call?.params?.videoEnabled == true || call?.callLog?.wasConference() == true
+                   call?.cameraEnabled = false // Disable camera while app is not on foreground
+               }
+               CallManager.instance().callkitAudioSessionActivated = false
+               CallManager.instance().lc?.configureAudioSession()
+               CallManager.instance().acceptCall(call: call!, hasVideo: call!.params?.videoEnabled ?? false)
+              
+           }
+        action.fulfill()
 		
-		if (UIApplication.shared.applicationState != .active) {
-			CallManager.instance().backgroundContextCall = call
-			CallManager.instance().backgroundContextCameraIsEnabled = call?.params?.videoEnabled == true || call?.callLog?.wasConference() == true
-			call?.cameraEnabled = false // Disable camera while app is not on foreground
-		}
-		CallManager.instance().callkitAudioSessionActivated = false
-		CallManager.instance().lc?.configureAudioSession()
-		CallManager.instance().acceptCall(call: call!, hasVideo: call!.params?.videoEnabled ?? false)
-		action.fulfill()
 	}
 
 	func provider(_ provider: CXProvider, perform action: CXSetHeldCallAction) {

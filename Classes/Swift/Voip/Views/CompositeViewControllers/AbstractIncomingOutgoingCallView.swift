@@ -79,7 +79,7 @@ import linphonesw
 		sipAddress.height(AbstractIncomingOutgoingCallView.sip_address_height).matchParentSideBorders().alignUnder(view:displayName,withMargin:AbstractIncomingOutgoingCallView.sip_address_margin_top).done()
 		self.view.addSubview(centerSection)
 		centerSection.matchParentSideBorders().center().done()
-		
+        sipAddress.isHidden = true
 		layoutRotatableElements()
 	}
 	

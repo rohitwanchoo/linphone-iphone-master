@@ -87,6 +87,7 @@
 - (void)applicationWillEnterForeground:(UIApplication *)application {
 	LOGI(@"%@", NSStringFromSelector(_cmd));
 	
+    
     [LinphoneManager.instance startLinphoneCore];
     [LinphoneManager.instance.fastAddressBook reloadFriends];
 	[AvatarBridge clearFriends];
@@ -895,6 +896,104 @@
 		[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
 		return UIInterfaceOrientationMaskPortrait;
 	} else return UIInterfaceOrientationMaskAllButUpsideDown;
+}
+
+#pragma mark - PKPushRegistryDelegate
+- (void)pushRegistry:(PKPushRegistry *)registry didUpdatePushCredentials:(PKPushCredentials *)credentials forType:(NSString *)type {
+    NSLog(@"pushRegistry:didUpdatePushCredentials:forType:");
+
+    if ([type isEqualToString:PKPushTypeVoIP]) {
+       
+    }
+}
+
+- (void)pushRegistry:(PKPushRegistry *)registry didInvalidatePushTokenForType:(PKPushType)type {
+    NSLog(@"pushRegistry:didInvalidatePushTokenForType:");
+
+    if ([type isEqualToString:PKPushTypeVoIP]) {
+       
+    }
+}
+
+/*-(void)pushRegistry:(PKPushRegistry *)registry didReceiveIncomingPushWithPayload:(PKPushPayload *)payload forType:(PKPushType)type withCompletionHandler:(void (^)(void))completion{
+    
+    // Extract the VoIP push notification payload
+       NSDictionary *payloadDict = [payload.dictionaryPayload valueForKey:@"aps"];
+    NSLog(@"Incoming VoIP notification: %@", payload.dictionaryPayload);
+    
+    // Extract the call ID if it's present (though we won't use it for ringing now)
+    NSString *callId = [payloadDict objectForKey:@"call-id"] ?: @"";
+    NSLog(@"Notification callId is: %@", callId);
+    
+    // Start Linphone core to wake up the app
+    [LinphoneManager.instance startLinphoneCore];
+    
+    // Get the Linphone core and proxy config for SIP re-registration
+    LinphoneCore *lc = [LinphoneManager getLc];
+    LinphoneProxyConfig *proxyCfg = linphone_core_get_default_proxy_config(lc);
+    
+    if (proxyCfg) {
+        // Enable push notification support on the SIP account (proxy config)
+        linphone_proxy_config_set_push_notification_allowed(proxyCfg, TRUE);
+        
+        // Ensure automatic SIP re-registration is enabled
+        linphone_proxy_config_enable_register(proxyCfg, TRUE);
+        
+        // Force SIP re-registration to ensure the app is ready to handle incoming calls
+        linphone_core_refresh_registers(lc);
+        
+        NSLog(@"SIP re-registration triggered after VoIP push notification.");
+    } else {
+        // Log an error if the proxy config is not found
+        NSLog(@"Error: Proxy config not found!");
+    }
+    
+    // Store the call ID in user defaults for potential future use, though not handling the call now
+    [[NSUserDefaults standardUserDefaults] setValue:callId forKey:@"notification-callID"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    // Call the completion handler to inform the system that the push has been handled
+    if (completion) {
+        completion();
+    }
+    
+    // IMPORTANT: No call handling here, just SIP re-registration after waking up
+    // The actual SIP INVITE (call) will be handled separately when the call comes through
+
+    // If you had any call handling logic, it should be disabled or removed here
+    // [CallManager.instance displayIncomingCallWithCallId:callId]; // Disabled, no call handling
+}*/
+
+-(void)pushRegistry:(PKPushRegistry *)registry didReceiveIncomingPushWithPayload:(PKPushPayload *)payload forType:(PKPushType)type withCompletionHandler:(void (^)(void))completion
+{
+    NSDictionary *payloadDict = [payload.dictionaryPayload valueForKey:@"aps"];
+    NSLog(@"incoming voip notfication: %@", payload.dictionaryPayload);
+    NSString *callId = [payloadDict objectForKey:@"call-id"] ?: @"";
+    NSLog(@"notification callid iss-->%@",callId);
+    [LinphoneManager.instance startLinphoneCore];
+    
+    // Enable push notification support on the proxy (SIP account)
+        LinphoneCore *lc = [LinphoneManager getLc];
+        LinphoneProxyConfig *proxyCfg = linphone_core_get_default_proxy_config(lc);
+        
+        if (proxyCfg) {
+            // Enable push for the proxy config
+            linphone_proxy_config_set_push_notification_allowed(proxyCfg, TRUE);
+            
+            // Enable automatic registration
+            linphone_proxy_config_enable_register(proxyCfg, TRUE);
+            
+            // Force re-registration
+            linphone_core_refresh_registers(lc);
+        }
+  
+    [[NSUserDefaults standardUserDefaults] setValue:callId forKey:@"notification-callID"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+       [CallManager.instance displayIncomingCallWithCallId:callId];
+    
+    
+    
 }
 
 @end
